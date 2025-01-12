@@ -4,9 +4,58 @@ import re
 import datetime
 
 
+st.set_page_config(page_title="Ứng dụng Ghi Chú", page_icon="📚", layout="wide")
+
+def set_sidebar_background(image_url):
+    st.markdown(
+        f"""
+        <style>
+        [data-testid="stSidebar"] {{
+            background: url({image_url});
+            background-size: cover;
+            background-position: center;
+            color: white; /* Màu chữ trên nền ảnh */
+            padding: 10px;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# truyền URL ảnh
+set_sidebar_background("https://png.pngtree.com/background/20210709/original/pngtree-school-season-student-start-school-supplies-discount-picture-image_954344.jpg")
+
+def set_background_image(image_file):
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background: url({image_file});
+            background-size: cover;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+menu = st.sidebar.selectbox("📚 Chọn Chức năng",["Tạo Ghi Chú", "Danh Sách Ghi Chú", "Tìm Kiếm", "Xóa Ghi Chú", "Chỉnh Sửa Ghi Chú", "Đặt Lịch Nhắc Nhở"])
+
+
+
+# Đường dẫn ảnh
+background_image = "https://antimatter.vn/wp-content/uploads/2022/05/background-banner.jpg" 
+set_background_image(background_image)
+
+st.title("Ứng dụng Ghi Chú")
+st.subheader("Hãy để lại Ghi Chú của mình tại đây!")
+
+
 # Tạo thư mục lưu trữ ghi chú
 if not os.path.exists("notes"):
     os.makedirs("notes")
+import streamlit as st
+
+
 
 # Hàm đọc ghi chú từ file
 def read_notes():
@@ -15,7 +64,7 @@ def read_notes():
         if file.endswith(".txt"):
             with open(f"notes/{file}", "r", encoding="utf-8") as f:
                 content = f.read()
-                # Kiểm tra tag, pinned và nhắc nhở
+                # Tag, pinner, nhắc nhở
                 tags, pinned, reminder = [], False, None
                 if "||tags||" in content:
                     parts = content.split("||tags||")
@@ -56,37 +105,8 @@ def check_reminders():
         if note["reminder"] and note["reminder"] > datetime.datetime.now():
             reminders.append((note["title"], note["reminder"]))
     return reminders
-# Đọc và nhúng CSS từ file
-def load_css(css_file):
-    with open(css_file) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-# Giao diện Streamlit
-st.set_page_config(page_title="Ứng dụng Ghi Chú", page_icon="📚", layout="wide")
-
-# Cập nhật phần CSS để thêm ảnh nền
-def add_background_image(image_path):
-    background_css = f"""
-    <style>
-        .stApp {{
-            background-image: url({image_path});
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            height: 100vh;  /* Chiều cao của toàn bộ trang */
-        }}
-    </style>
-    """
-    st.markdown(background_css, unsafe_allow_html=True)
-
-# Thêm ảnh nền từ file trong thư mục images
-image_path = "images/hinh7.jpg"
-add_background_image(image_path)
 
 
-menu = st.sidebar.selectbox("📚 Chọn Chức năng", ["Tạo Ghi Chú", "Danh Sách Ghi Chú", "Tìm Kiếm", "Xóa Ghi Chú", "Chỉnh Sửa Ghi Chú", "Đặt Lịch Nhắc Nhở"])
-
-st.title("Ứng dụng Ghi Chú")
-st.subheader("Hãy để lại Ghi Chú của mình tại đây!")
 
 # Kiểm tra và hiển thị nhắc nhở
 reminders = check_reminders()
@@ -99,7 +119,7 @@ if menu == "Tạo Ghi Chú":
     st.header("Tạo Ghi Chú Mới")
     note_title = st.text_input("Tiêu đề ghi chú")
     note_content = st.text_area("Nội dung ghi chú")
-    note_tags = st.text_input("Gắn nhãn (tags, cách nhau bởi dấu phẩy)")
+    note_tags = st.text_input("Gắn nhãn (tags)")
     pinned = st.checkbox("Ghim ghi chú")
 
     if st.button("Lưu Ghi Chú"):
@@ -112,7 +132,7 @@ if menu == "Tạo Ghi Chú":
 
 elif menu == "Danh Sách Ghi Chú":
     st.header("Danh Sách Ghi Chú")
-    notes = sort_notes(read_notes())  # Lấy danh sách ghi chú đã sắp xếp
+    notes = sort_notes(read_notes())  
     if notes:
         for note in notes:
             with st.expander(f"{'📌 ' if note['pinned'] else ''}{note['title']}"):
@@ -168,25 +188,16 @@ elif menu == "Chỉnh Sửa Ghi Chú":
 
 elif menu == "Đặt Lịch Nhắc Nhở":
     st.header("🔔 Đặt Lịch Nhắc Nhở")
-    
-    # Danh sách các ghi chú
     notes = os.listdir("notes")
     if notes:
-        selected_note = st.selectbox("Chọn ghi chú để đặt nhắc nhở:", notes)
-        
-        # Chọn ngày và giờ
+        selected_note = st.selectbox("Chọn ghi chú để đặt nhắc nhở:", notes)   
         reminder_date = st.date_input("Chọn ngày nhắc nhở:", datetime.date.today())
         reminder_time = st.time_input("Chọn giờ nhắc nhở:", datetime.datetime.now().time())
-        
-        # Nút lưu nhắc nhở
         if st.button("📅 Lưu Nhắc Nhở"):
             reminder_datetime = datetime.datetime.combine(reminder_date, reminder_time)
-            
-            # Lưu thời gian nhắc nhở vào file
             note_path = os.path.join("notes", selected_note)
             with open(note_path, "a", encoding="utf-8") as file:
                 file.write(f"\n||reminder||{reminder_datetime}")
-            
             st.success(f"Nhắc nhở cho ghi chú '{selected_note}' đã được đặt vào lúc {reminder_datetime}.")
     else:
         st.warning("⚠️ Không có ghi chú nào để đặt nhắc nhở. Hãy thêm ghi chú trước!")
